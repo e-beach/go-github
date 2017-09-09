@@ -343,7 +343,7 @@ func (s *OrganizationsService) GetTeamMembership(ctx context.Context, team int, 
 	return t, resp, nil
 }
 
-// OrganizationAddTeamMembershipOptions does stuff specifies the optional
+// OrganizationAddTeamMembershipOptions specifies the optional
 // parameters to the OrganizationsService.AddTeamMembership method.
 type OrganizationAddTeamMembershipOptions struct {
 	// Role specifies the role the user should have in the team. Possible
