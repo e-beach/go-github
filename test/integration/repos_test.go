@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
-
 	"github.com/google/go-github/github"
 )
 
@@ -108,19 +107,15 @@ func TestRepositories_EditBranches(t *testing.T) {
 		t.Fatalf("Branch %v of repo %v is already protected", "master", *repo.Name)
 	}
 
-	// TODO: This test fails with 422 Validation Failed [{Resource: Field: Code: Message:}].
-	//       Someone familiar with protection requests needs to come up with
-	//       a valid protection request that doesn't give 422 error.
 	protectionRequest := &github.ProtectionRequest{
 		RequiredStatusChecks: &github.RequiredStatusChecks{
 			Strict:   true,
 			Contexts: []string{"continuous-integration"},
 		},
 		RequiredPullRequestReviews: &github.PullRequestReviewsEnforcementRequest{
-			DismissalRestrictionsRequest: &github.DismissalRestrictionsRequest{
-				Users: &[]string{},
-				Teams: &[]string{},
-			},
+			// TODO: Dismissal restrictions behave differently with personal repositories
+			// than with repositories owned by an organization. In order to test such behavior,
+			// we need to add support for creating temporary organization repositories.
 			DismissStaleReviews: true,
 		},
 		EnforceAdmins: true,
@@ -135,23 +130,23 @@ func TestRepositories_EditBranches(t *testing.T) {
 		t.Fatalf("Repositories.UpdateBranchProtection() returned error: %v", err)
 	}
 
+	enforcementURL :=  "https://api.github.com/repos/"+ *repo.Owner.Login + "/" + *repo.Name + "/branches/master/protection/enforce_admins"
+
 	want := &github.Protection{
 		RequiredStatusChecks: &github.RequiredStatusChecks{
 			Strict:   true,
 			Contexts: []string{"continuous-integration"},
 		},
 		RequiredPullRequestReviews: &github.PullRequestReviewsEnforcement{
-			DismissalRestrictions: github.DismissalRestrictions{
-				Users: []*github.User{},
-				Teams: []*github.Team{},
-			},
 			DismissStaleReviews: true,
 		},
 		EnforceAdmins: &github.AdminEnforcement{
+			URL: &enforcementURL,
 			Enabled: true,
 		},
 		Restrictions: nil,
 	}
+
 	if !reflect.DeepEqual(protection, want) {
 		t.Errorf("Repositories.UpdateBranchProtection() returned %+v, want %+v", protection, want)
 	}
